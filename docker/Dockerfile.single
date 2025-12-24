@@ -1,0 +1,61 @@
+FROM golang:1.24-alpine AS builder
+
+ARG USERNAME
+ARG PASSWORD
+
+ENV APP_NAME=orchid-starter
+ENV ACCESS_TOKEN_USR=${USERNAME}
+ENV ACCESS_TOKEN_PWD=${PASSWORD}
+
+ENV GOSUMDB=off
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+
+RUN mkdir -p /app/${APP_NAME}
+WORKDIR /app/${APP_NAME}
+COPY ./ /app/${APP_NAME}
+
+RUN apk --no-cache add bash \
+	curl \
+	git \
+	gcc \
+	g++ 
+
+RUN git config \
+	--global \
+	url."https://${ACCESS_TOKEN_USR}:${ACCESS_TOKEN_PWD}@github.com".insteadOf \
+	"https://github.com"
+
+RUN go mod download 
+
+RUN go build -o /app/$APP_NAME/app-cli cmd/cli/main.go
+RUN go build -o /app/$APP_NAME/main cmd/api/main.go
+RUN go build -o /app/$APP_NAME/task cmd/task/main.go
+
+RUN git config \
+	--global \
+	--unset \
+	url."https://${ACCESS_TOKEN_USR}:${ACCESS_TOKEN_PWD}@github.com".insteadOf \
+	"https://github.com"
+
+
+# make a small image #
+FROM harbor.mbizmarket.my.id:14567/mbizmarket/alpine:latest
+
+ENV APP_NAME=orchid-starter
+
+USER root
+
+RUN mkdir -p /app/$APP_NAME
+
+COPY --from=builder /app/$APP_NAME/app-cli /app/$APP_NAME/commands
+COPY --from=builder /app/$APP_NAME/main /app/$APP_NAME/main
+COPY --from=builder /app/$APP_NAME/task /app/$APP_NAME/task
+
+RUN chmod +x /app/$APP_NAME/commands
+RUN chmod +x /app/$APP_NAME/main
+RUN chmod +x /app/$APP_NAME/task
+
+WORKDIR /app/$APP_NAME
+
+USER mbiz
