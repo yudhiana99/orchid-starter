@@ -13,7 +13,6 @@ exec:
 # Uncomment to enable federation
 federation:
   filename: gql/graph/generated/federation.go
-  # filename_template: "{name}.federation.go"
   package: generated
   version: 2
 
