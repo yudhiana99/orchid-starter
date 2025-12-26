@@ -40,6 +40,10 @@ func (s *Server) setupRoutes(container *bootstrap.Container) {
 		// Add more route setups here as your application grows
 	}
 
+	if s.cfg.AppEnv == "dev" {
+		routeSetups = append(routeSetups, handler.GQLRoutes)
+	}
+
 	handler.SetupAllRoutes(s.app, container, routeSetups...)
 }
 

@@ -4,6 +4,7 @@ import (
 	"orchid-starter/config"
 	"orchid-starter/internal/bootstrap"
 	"orchid-starter/internal/bootstrap/server/applications/handler"
+	"orchid-starter/middleware"
 
 	"github.com/kataras/iris/v12"
 	"github.com/mataharibiz/ward/logging"
@@ -19,6 +20,9 @@ func NewGQLServer(container *bootstrap.Container) *Server {
 		cfg: container.GetConfig(),
 		app: container.GetApp(),
 	}
+
+	// Setup Global middlewares before server initialization
+	srv.setupMiddlewares(middleware.Debug)
 
 	// Setup routes after server initialization
 	srv.setupRoutes(container)
@@ -49,4 +53,10 @@ func (s *Server) setupRoutes(container *bootstrap.Container) {
 		// Add more route setups here as your application grows
 	}
 	handler.SetupAllRoutes(s.app, container, routeSetups...)
+}
+
+func (s *Server) setupMiddlewares(middlewares ...func(iris.Context)) {
+	for _, middleware := range middlewares {
+		s.app.Use(middleware)
+	}
 }
