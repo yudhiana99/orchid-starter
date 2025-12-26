@@ -1,15 +1,28 @@
 package gqlHandler
 
 import (
+	"orchid-starter/gql/graph/generated"
+	"orchid-starter/gql/graph/resolvers"
 	"orchid-starter/http"
 	"orchid-starter/internal/bootstrap"
 	v2 "orchid-starter/modules/default/delivery/api/rest/v2"
 	"orchid-starter/modules/default/repository"
 	"orchid-starter/modules/default/usecase"
 
+	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/kataras/iris/v12"
 	promHttp "github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+type graphHandler struct {
+	di *bootstrap.DirectInjection
+}
+
+func NewGraphHandler(di *bootstrap.DirectInjection) *graphHandler {
+	return &graphHandler{
+		di: di,
+	}
+}
 
 func NewDefaultGQLHandler(app iris.Party, di *bootstrap.DirectInjection) {
 
@@ -26,4 +39,18 @@ func NewDefaultGQLHandler(app iris.Party, di *bootstrap.DirectInjection) {
 	app.Get("/", defaultV2.Welcome)
 	app.Get("/health-check", http.HealthCheckHandler)
 	app.OnErrorCode(iris.StatusNotFound, http.NotFoundHandler)
+}
+
+func (base *graphHandler) GQLHandler() iris.Handler {
+
+	conf := generated.Config{
+		Resolvers: &resolvers.Resolver{
+			DI: base.di,
+		},
+	}
+
+	serverGraphql := handler.NewDefaultServer(generated.NewExecutableSchema(conf))
+	return func(ctx iris.Context) {
+		serverGraphql.ServeHTTP(ctx.ResponseWriter(), ctx.Request())
+	}
 }

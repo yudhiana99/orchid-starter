@@ -2,7 +2,7 @@ package handler
 
 import (
 	"orchid-starter/internal/bootstrap"
-	api "orchid-starter/modules/default/delivery/api/rest"
+	gqlHandler "orchid-starter/modules/default/delivery/api/gql"
 
 	"github.com/kataras/iris/v12"
 )
@@ -14,6 +14,10 @@ func GQLRoutes(app *iris.Application, container *bootstrap.Container) {
 	di := container.GetDI()
 
 	app.PartyFunc("/", func(defaultParty iris.Party) {
-		api.NewDefaultHandler(defaultParty, di)
+		gqlHandler.NewDefaultGQLHandler(app, di)
+	})
+
+	app.PartyFunc("/gql", func(graphHandler iris.Party) {
+		graphHandler.Post("/query", gqlHandler.NewGraphHandler(di).GQLHandler())
 	})
 }

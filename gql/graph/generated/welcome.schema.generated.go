@@ -5,11 +5,11 @@ package generated
 import (
 	"context"
 	"errors"
+	"orchid-starter/gql/graph/model"
 	"strconv"
 	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -27,25 +27,25 @@ import (
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) __Service_sdl(ctx context.Context, field graphql.CollectedField, obj *fedruntime.Service) (ret graphql.Marshaler) {
+func (ec *executionContext) _ResponseWelcome_message(ctx context.Context, field graphql.CollectedField, obj *model.ResponseWelcome) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext__Service_sdl,
+		ec.fieldContext_ResponseWelcome_message,
 		func(ctx context.Context) (any, error) {
-			return obj.SDL, nil
+			return obj.Message, nil
 		},
 		nil,
-		ec.marshalOString2string,
+		ec.marshalNString2string,
 		true,
-		false,
+		true,
 	)
 }
 
-func (ec *executionContext) fieldContext__Service_sdl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ResponseWelcome_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "_Service",
+		Object:     "ResponseWelcome",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -68,19 +68,22 @@ func (ec *executionContext) fieldContext__Service_sdl(_ context.Context, field g
 
 // region    **************************** object.gotpl ****************************
 
-var _ServiceImplementors = []string{"_Service"}
+var responseWelcomeImplementors = []string{"ResponseWelcome"}
 
-func (ec *executionContext) __Service(ctx context.Context, sel ast.SelectionSet, obj *fedruntime.Service) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, _ServiceImplementors)
+func (ec *executionContext) _ResponseWelcome(ctx context.Context, sel ast.SelectionSet, obj *model.ResponseWelcome) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, responseWelcomeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("_Service")
-		case "sdl":
-			out.Values[i] = ec.__Service_sdl(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("ResponseWelcome")
+		case "message":
+			out.Values[i] = ec._ResponseWelcome_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -108,8 +111,18 @@ func (ec *executionContext) __Service(ctx context.Context, sel ast.SelectionSet,
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalN_Service2githubᚗcomᚋ99designsᚋgqlgenᚋpluginᚋfederationᚋfedruntimeᚐService(ctx context.Context, sel ast.SelectionSet, v fedruntime.Service) graphql.Marshaler {
-	return ec.__Service(ctx, sel, &v)
+func (ec *executionContext) marshalNResponseWelcome2orchidᚑstarterᚋgqlᚋgraphᚋmodelᚐResponseWelcome(ctx context.Context, sel ast.SelectionSet, v model.ResponseWelcome) graphql.Marshaler {
+	return ec._ResponseWelcome(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNResponseWelcome2ᚖorchidᚑstarterᚋgqlᚋgraphᚋmodelᚐResponseWelcome(ctx context.Context, sel ast.SelectionSet, v *model.ResponseWelcome) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResponseWelcome(ctx, sel, v)
 }
 
 // endregion ***************************** type.gotpl *****************************

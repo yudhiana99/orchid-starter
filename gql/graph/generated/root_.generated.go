@@ -32,6 +32,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Query() QueryResolver
 }
 
 type DirectiveRoot struct {
@@ -39,7 +40,12 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Query struct {
+		Welcome            func(childComplexity int) int
 		__resolve__service func(childComplexity int) int
+	}
+
+	ResponseWelcome struct {
+		Message func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -66,12 +72,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Query.welcome":
+		if e.complexity.Query.Welcome == nil {
+			break
+		}
+
+		return e.complexity.Query.Welcome(childComplexity), true
+
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
 			break
 		}
 
 		return e.complexity.Query.__resolve__service(childComplexity), true
+
+	case "ResponseWelcome.message":
+		if e.complexity.ResponseWelcome.Message == nil {
+			break
+		}
+
+		return e.complexity.ResponseWelcome.Message(childComplexity), true
 
 	case "_Service.sdl":
 		if e.complexity._Service.SDL == nil {
@@ -169,6 +189,13 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "../../schemas/query_schema.graphqls", Input: `extend type Query {
+    welcome: ResponseWelcome!
+}`, BuiltIn: false},
+	{Name: "../../schemas/welcome.schema.graphqls", Input: `
+type ResponseWelcome {
+    message: String!
+}`, BuiltIn: false},
 	{Name: "../../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
 	directive @composeDirective(name: String!) repeatable on SCHEMA

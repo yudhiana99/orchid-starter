@@ -4,3 +4,7 @@ package model
 
 type Query struct {
 }
+
+type ResponseWelcome struct {
+	Message string `json:"message"`
+}
