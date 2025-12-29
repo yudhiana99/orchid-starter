@@ -257,7 +257,7 @@ input QueryOption {
 	limit: Int	
 	order: String
 	filter: [Filter]
-	extraParams : [ExtraParams]
+	extraParams: [ExtraParams]
 }
 
 input Filter {
