@@ -5,4 +5,5 @@ const (
 	RedisTypePostLoginToken  string = "static"
 	RedisTypeThirdPartyToken string = "token"
 	RedisTypeRole            string = "role"
+	RedisTypeStatic          string = "static"
 )
