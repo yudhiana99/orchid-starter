@@ -8,9 +8,20 @@ set +a
 MODULE_NAME="${1:-default}"
 MODULES_ROOT="./modules/${MODULE_NAME}"
 
-# Fungsi untuk mengubah snake_case menjadi camelCase
+
+normalize_module_key() {
+  echo "$1" | tr '-' '_'
+}
+
+to_snake_case() {
+  echo "$1" | tr '-' '_'
+}
+
+
 to_camel_case() {
-  echo "$1" | sed -r 's/(^|_)([a-z])/\U\2/g'
+  local s
+  s=$(normalize_module_key "$1")
+  echo "$s" | sed -r 's/(^|_)([a-z])/\U\2/g'
 }
 
 to_lower_camel_case() {
@@ -19,16 +30,20 @@ to_lower_camel_case() {
   echo "${camel,}"
 }
 
+MODULE_SLUG="${1:-default}"    
+MODULE_KEY="$(normalize_module_key "$MODULE_SLUG")"
+MODULES_ROOT="./modules/${MODULE_SLUG}"
+
 generate_file_content() {
   local path="$1"
   local package_name="$2"
-  local module_name="$3"
+
 
   local CamelModule
   local lowerCamelModule
 
-  CamelModule=$(to_camel_case "$module_name")
-  lowerCamelModule=$(to_lower_camel_case "$module_name")
+  CamelModule=$(to_camel_case "$MODULE_KEY")
+  lowerCamelModule=$(to_lower_camel_case "$MODULE_KEY")
 
   echo "package $package_name"
   echo ""
@@ -50,11 +65,11 @@ type ${CamelModule}UsecaseInterface interface {
 EOF
       ;;
 
-    "usecase/${module_name}_usecase.go")
+    "usecase/${MODULE_SLUG}_usecase.go")
       cat <<EOF
 import (
 	"${APP_NAME}/internal/clients"
-	"${APP_NAME}/modules/${module_name}/repository"
+	"${APP_NAME}/modules/${MODULE_SLUG}/repository"
 
 	"github.com/mataharibiz/ward/logging"
 	"gorm.io/gorm"
@@ -78,7 +93,7 @@ func New${CamelModule}Usecase(db *gorm.DB, r repository.${CamelModule}Repository
 EOF
       ;;
 
-    "repository/${module_name}_repository.go")
+    "repository/${MODULE_SLUG}_repository.go")
       cat <<EOF
 import (
     "github.com/mataharibiz/ward/logging"
@@ -127,9 +142,9 @@ paths=(
   "delivery/api/rest/handler.go"
   "delivery/api/rest/v2/handler_v2.go"
   "delivery/event/event.go"
-  "repository/${MODULE_NAME}_repository.go"
+  "repository/${MODULE_SLUG}_repository.go"
   "repository/repository_interface.go"
-  "usecase/${MODULE_NAME}_usecase.go"
+  "usecase/${MODULE_SLUG}_usecase.go"
   "usecase/usecase_interface.go"
   "model/db/${MODULE_NAME}.go"
   "model/request/request_${MODULE_NAME}.go"
