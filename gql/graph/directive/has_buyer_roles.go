@@ -44,7 +44,7 @@ func (d *Directive) HasBuyerRoles(ctx context.Context, obj any, next graphql.Res
 		return nil, &gqlError.Error{
 			Message: "you're not allowed perform this action",
 			Extensions: map[string]interface{}{
-				"code": "INVALID_SELLER_ROLES",
+				"code": "INVALID_buyer_ROLES",
 			},
 		}
 	}
@@ -65,21 +65,21 @@ func (i *HasBuyerRolesInput) CheckCacheRoles(roles []model.BuyerRoles) bool {
 	}
 
 	redisKey := fmt.Sprintf("COMPANY:%v:USER:ROLES:%v", compId, userID)
-	sellerRolesString, errGet := rdsUtil.HGet(redisKey, "buyer-roles")
-	if errGet != nil || sellerRolesString == "" {
+	buyerRolesString, errGet := rdsUtil.HGet(redisKey, "buyer-roles")
+	if errGet != nil || buyerRolesString == "" {
 		i.Injection.Log.Warn("role buyer on redis is empty")
 		return false
 	}
 
-	if _, ok := sellerRolesString.(string); !ok {
+	if _, ok := buyerRolesString.(string); !ok {
 		i.Injection.Log.Warn("role buyer on redis is not string")
 		return false
 	}
 
-	sellerRoles := strings.Split(sellerRolesString.(string), ",")
+	buyerRoles := strings.Split(buyerRolesString.(string), ",")
 	baseRoles := make(map[string]bool)
 
-	for _, role := range sellerRoles {
+	for _, role := range buyerRoles {
 		baseRoles[strings.ToUpper(role)] = true
 	}
 
