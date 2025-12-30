@@ -17,8 +17,3 @@ enum Origin {
     VEMBRACE
     TRIDENT
 }
-
-enum CompanyType {
-    BUYER
-    SELLER
-}

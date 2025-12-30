@@ -75,61 +75,6 @@ func (e BuyerRoles) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-type CompanyType string
-
-const (
-	CompanyTypeBuyer  CompanyType = "BUYER"
-	CompanyTypeSeller CompanyType = "SELLER"
-)
-
-var AllCompanyType = []CompanyType{
-	CompanyTypeBuyer,
-	CompanyTypeSeller,
-}
-
-func (e CompanyType) IsValid() bool {
-	switch e {
-	case CompanyTypeBuyer, CompanyTypeSeller:
-		return true
-	}
-	return false
-}
-
-func (e CompanyType) String() string {
-	return string(e)
-}
-
-func (e *CompanyType) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = CompanyType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CompanyType", str)
-	}
-	return nil
-}
-
-func (e CompanyType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *CompanyType) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e CompanyType) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
 type Origin string
 
 const (

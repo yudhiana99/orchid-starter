@@ -275,13 +275,7 @@ enum Origin {
     VOODOO
     VEMBRACE
     TRIDENT
-}
-
-enum CompanyType {
-    BUYER
-    SELLER
-}
-`, BuiltIn: false},
+}`, BuiltIn: false},
 	{Name: "../../schemas/master_schema.graphqls", Input: `scalar Int64
 scalar Int8
 scalar Time
