@@ -13,6 +13,7 @@ const (
 	HeaderPartner         string = "Dmp-Partner"
 	HeaderAppRequestID    string = "App-Request-Id"
 	HeaderRequestID       string = "X-Request-Id"
+	HeaderClientID        string = "X-Client-Id"
 
 	// Authentication Headers
 	HeaderAuthorization string = "Authorization"

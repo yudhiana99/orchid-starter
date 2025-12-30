@@ -19,6 +19,7 @@ type RequestContext struct {
 	TokenIdentifier string
 	ThirdParty      string
 	Partner         string
+	ClientID       string
 }
 
 // WithRequestContext adds RequestContext to the given context

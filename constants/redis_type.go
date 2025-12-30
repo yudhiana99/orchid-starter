@@ -1,6 +1,7 @@
 package constants
 
 const (
-	RedisTypePreLoginToken  string = "token"
-	RedisTypePostLoginToken string = "static"
+	RedisTypePreLoginToken   string = "token"
+	RedisTypePostLoginToken  string = "static"
+	RedisTypeThirdPartyToken string = "token"
 )

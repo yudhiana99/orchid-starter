@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"orchid-starter/constants"
+	"orchid-starter/internal/bootstrap"
 	"orchid-starter/internal/common"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -14,7 +15,20 @@ import (
 	gqlError "github.com/vektah/gqlparser/v2/gqlerror"
 )
 
+type Directive struct {
+	DI *bootstrap.DirectInjection
+}
+
+func NewDirective(di *bootstrap.DirectInjection) *Directive {
+	return &Directive{
+		DI: di,
+	}
+}
+
 type CheckTokenInput struct {
+	Injection *bootstrap.DirectInjection
+	Ctx       context.Context
+
 	TokenIdentifier string
 	TokenState      string
 	AuthToken       string
@@ -24,7 +38,12 @@ type CheckTokenInput struct {
 	SessionCompID uint64
 }
 
-func AuthToken(ctx context.Context, obj any, next graphql.Resolver) (res any, err error) {
+type CheckThirdPartySessionTokenInput struct {
+	Injection *bootstrap.DirectInjection
+	Ctx       context.Context
+}
+
+func (d *Directive) AuthToken(ctx context.Context, obj any, next graphql.Resolver) (res any, err error) {
 
 	var (
 		appToken        = common.GetAppTokenFromContext(ctx)
@@ -35,10 +54,22 @@ func AuthToken(ctx context.Context, obj any, next graphql.Resolver) (res any, er
 		companyID       = common.GetCompanyIDFromContext(ctx)
 	)
 
+	// handle third party authentication
 	if isThirdParty := common.GetThirdPartyFromContext(ctx); isThirdParty == "1" {
 		if partner := common.GetPartnerFromContext(ctx); partner != "" {
-			// handle third party authentication
-			// TODO: implement third party auth validation
+			thirdParty := CheckThirdPartySession(d.DI, ctx)
+			if exist := thirdParty.CheckCacheToken(); !exist {
+				// authenticate token to auth service
+				client := d.DI.GetClient().InternalClient
+				if err := client.AuthenticateThirdPartyToken(ctx); err != nil {
+					return nil, &gqlError.Error{
+						Message: err.Error(),
+						Extensions: map[string]interface{}{
+							"code": "INVALID_TOKEN",
+						},
+					}
+				}
+			}
 		}
 	}
 
@@ -68,6 +99,8 @@ func AuthToken(ctx context.Context, obj any, next graphql.Resolver) (res any, er
 
 	// valid session token
 	checkTokenInput := CheckTokenInput{
+		Ctx:             ctx,
+		Injection:       d.DI,
 		TokenIdentifier: tokenIdentifier,
 		TokenState:      tokenState,
 		AuthToken:       appToken,
@@ -141,36 +174,64 @@ func CheckSessionToken(input *CheckTokenInput) *gqlError.Error {
 		return err
 	}
 
-	isExist, errCheck := input.CheckCacheToken()
-	if errCheck != nil {
-		return errCheck
-	}
-
-	// token not found in cache
-	if !isExist {
-		// TODO: check token in database
+	if exist := input.CheckCacheToken(); !exist {
+		// authenticate token to auth service
+		client := input.Injection.GetClient().InternalClient
+		if err := client.AuthenticateToken(input.Ctx); err != nil {
+			return &gqlError.Error{
+				Message: err.Error(),
+				Extensions: map[string]interface{}{
+					"code": "INVALID_TOKEN",
+				},
+			}
+		}
 	}
 
 	return nil
 }
 
-func (ck *CheckTokenInput) CheckCacheToken() (bool, *gqlError.Error) {
+func (ck *CheckTokenInput) CheckCacheToken() bool {
 	rdsUtil, err := mbizUtil.NewRedisUtil(ck.GetRedisType())
 	if err != nil {
-		return false, &gqlError.Error{
-			Message: "cache error. Error: " + err.Error(),
-			Extensions: map[string]interface{}{
-				"code": "CACHE_ERROR",
-			},
-		}
+		ck.Injection.Log.Warn("failed connect to redis", "error", err)
+		return false
 	}
 
 	redisKey := fmt.Sprintf("COMPANY:%v:USER:%v:TOKENJWT:%v", ck.SessionCompID, ck.SessionUserID, ck.AuthToken)
 	token, errGet := rdsUtil.Get(redisKey)
 	if errGet != nil || token == "" {
 		logging.NewLogger().Warn("token redis value is empty")
-		return false, nil
+		return false
 	}
 
-	return true, nil
+	return true
+}
+
+func CheckThirdPartySession(di *bootstrap.DirectInjection, ctx context.Context) *CheckThirdPartySessionTokenInput {
+	return &CheckThirdPartySessionTokenInput{
+		Injection: di,
+		Ctx:       ctx,
+	}
+}
+
+func (ckt *CheckThirdPartySessionTokenInput) CheckCacheToken() bool {
+	var (
+		appToken = common.GetAppTokenFromContext(ckt.Ctx)
+		clientID = common.GetClientIDFromContext(ckt.Ctx)
+	)
+
+	rdsUtil, err := mbizUtil.NewRedisUtil(constants.RedisTypeThirdPartyToken)
+	if err != nil {
+		ckt.Injection.Log.Warn("failed connect to redis", "error", err)
+		return false
+	}
+
+	redisKey := fmt.Sprintf("CLIENT:%v:TOKENJWT:%v", clientID, appToken)
+	token, errGet := rdsUtil.Get(redisKey)
+	if errGet != nil || token == "" {
+		logging.NewLogger().Warn("token redis value is empty")
+		return false
+	}
+
+	return true
 }

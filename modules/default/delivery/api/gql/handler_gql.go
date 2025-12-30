@@ -46,12 +46,13 @@ func NewDefaultGQLHandler(app iris.Party, di *bootstrap.DirectInjection) {
 
 func (base *graphHandler) GQLHandler() iris.Handler {
 
+	directiveHandler := directive.NewDirective(base.di)
 	conf := generated.Config{
 		Resolvers: &resolvers.Resolver{
 			DI: base.di,
 		},
 		Directives: generated.DirectiveRoot{
-			AuthToken: directive.AuthToken,
+			AuthToken: directiveHandler.AuthToken,
 		},
 	}
 

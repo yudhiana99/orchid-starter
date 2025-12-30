@@ -15,4 +15,6 @@ type InternalClientInterface interface {
 	GetCompanyGQLDetail(ctx context.Context, companyID uint64, selected string) (result modelCommon.CompanyDetailGQLResponse, err error)
 	GetProductDetail(ctx context.Context, productID uint64) (result modelCommon.ProductDetailResponse, err error)
 	GetSkuDetail(ctx context.Context, skuID uint64, urlParams []string) (result modelCommon.SkuDetailResponse, err error)
+	AuthenticateToken(ctx context.Context) (err error)
+	AuthenticateThirdPartyToken(ctx context.Context) (err error)
 }
