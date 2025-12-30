@@ -34,5 +34,5 @@ func (d *Directive) AllowedOrigin(ctx context.Context, obj any, next graphql.Res
 		}
 	}
 
-	return
+	return next(ctx)
 }
